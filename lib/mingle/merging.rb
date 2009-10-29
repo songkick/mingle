@@ -12,8 +12,8 @@ module Mingle
         next unless value.nil? or overwrites.include?(key.to_sym)
         write_attribute(key, victim[key])
       end
-      victim.destroy
-      save
+      
+      returning(valid?) { |valid| save and victim.destroy if valid }
     end
     
     def self.extract_list(hash, key)

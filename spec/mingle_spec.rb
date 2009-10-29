@@ -19,21 +19,40 @@ describe Mingle do
       @mike.first_name.should == 'Bob'
     end
     
-    it 'saves the target record' do
-      @mike.merge @bob
-      @mike.reload.first_name.should == 'Bob'
+    describe 'when the target is valid after the merge' do
+      it 'saves the target record' do
+        @mike.should_receive :save
+        @mike.merge @bob
+      end
+      
+      it 'removes the victim from the database' do
+        User.count.should == 2
+        @mike.merge @bob
+        User.count.should == 1
+        User.first.should == @mike
+      end
+      
+      it 'removes the victim record using #destroy' do
+        @bob.should_receive(:destroy)
+        @mike.merge @bob
+      end
     end
     
-    it 'removes the victim from the database' do
-      User.count.should == 2
-      @mike.merge @bob
-      User.count.should == 1
-      User.first.should == @mike
-    end
-    
-    it 'removes the victim record using #destroy' do
-      @bob.should_receive(:destroy)
-      @mike.merge @bob
+    describe 'when the target is invalid after the merge' do
+      before :each do
+        @mike.username = 'admin'
+        @mike.should_not be_valid
+      end
+      
+      it 'does not save the target record' do
+        @mike.should_not_receive :save
+        @mike.merge @bob
+      end
+      
+      it 'does not remove the target from the database' do
+        @mike.merge @bob
+        User.count.should == 2
+      end
     end
     
     it 'protects fields passed with :keep' do
