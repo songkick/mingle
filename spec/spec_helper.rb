@@ -4,7 +4,7 @@ require 'database_cleaner'
 require 'lib/mingle'
 
 ActiveRecord::Base.establish_connection :adapter  => 'sqlite3',
-                                        :database => 'spec/test.db'
+                                        :database => ':memory:'
 
 ActiveRecord::Base.logger = Logger.new('spec/test.log')
 
