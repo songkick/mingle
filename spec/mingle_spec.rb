@@ -24,6 +24,11 @@ describe Mingle do
       @mike.reload
       @mike.first_name.should == 'Bob'
     end
+    
+    it 'protects fields passed with :keep' do
+      @mike.merge @bob, :keep => :first_name
+      @mike.first_name.should be_nil
+    end
   end
 end
 

@@ -1,10 +1,12 @@
 module Mingle
   module Merging
     
-    def merge(record)
+    def merge(record, options = {})
       raise IncompatibleTypes.new unless record.class === self
+      keepers = (options[:keep] || []).to_a
       attributes.each do |key, value|
-        write_attribute(key, record[key]) if value.nil?
+        next if !value.nil? or keepers.include?(key.to_sym)
+        write_attribute(key, record[key])
       end
       save
     end
