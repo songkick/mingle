@@ -29,6 +29,11 @@ describe Mingle do
       @mike.merge @bob, :keep => :first_name
       @mike.first_name.should be_nil
     end
+    
+    it 'overwrites fields passed with :overwrite' do
+      @mike.merge @bob, :overwrite => :username
+      @mike.username.should == 'bob'
+    end
   end
 end
 
