@@ -131,5 +131,35 @@ describe '#merge' do
       end
     end
   end
+  
+  describe 'with has_many :through associations' do
+    describe 'with no conflicting links' do
+      before :each do
+        @mike.artists = (1..2).map { Factory :artist }
+        @bob.artists  = (1..3).map { Factory :artist }
+      end
+      
+      it 'concatenates the associated collections' do
+        @bob.merge @mike
+        @bob.reload.artists.size.should == 5
+        Artist.all.each { |a| a.fans.should == [@bob] }
+      end
+    end
+    
+    describe 'with conflicting links' do
+      before :each do
+        @artists = (1..5).map { Factory :artist }
+        @mike.artists = @artists.values_at 0, 2, 4
+        @bob.artists  = @artists.values_at 1, 0, 3
+      end
+      
+      it 'concatenates the associated collections' do
+        @bob.reload.artists.size.should == 3
+        @bob.merge @mike
+        @bob.reload.artists.size.should == 5
+        @artists.each { |a| a.fans.should == [@bob] }
+      end
+    end
+  end
 end
 

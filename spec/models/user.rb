@@ -5,5 +5,8 @@ class User < ActiveRecord::Base
   
   has_many :posts
   has_and_belongs_to_many :groups
+  
+  has_many :trackings
+  has_many :artists, :through => :trackings
 end
 

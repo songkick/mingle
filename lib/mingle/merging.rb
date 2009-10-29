@@ -11,7 +11,11 @@ module Mingle
     end
     
     def merge_all_associations(victim)
-      self.class.reflect_on_all_associations.each do |assoc|
+      self.class.reflect_on_all_associations.sort { |a,b|
+        a.options[:through] ?
+          (b.options[:through] ? 0 : -1) :
+          (b.options[:through] ? 1 : 0)
+      }.each do |assoc|
         merge_association(victim, assoc.name)
       end
     end
@@ -35,8 +39,22 @@ module Mingle
     end
     
     def merge_has_many_association(victim, assoc)
+      return merge_has_many_through_association(victim, assoc) if assoc.options[:through]
       key = connection.quote_column_name(assoc.primary_key_name)
       victim.__send__(assoc.name).update_all("#{key} = #{id}", "#{key} = #{victim.id}")
+    end
+    
+    # TODO merge join models as first-class objects
+    def merge_has_many_through_association(victim, assoc)
+      through     = assoc.through_reflection
+      foreign_key = assoc.association_foreign_key
+      ids         = __send__(through.name).map { |t| t.__send__(foreign_key) }
+      klass       = Kernel.const_get(through.class_name)
+      
+      primary_key = connection.quote_column_name(through.primary_key_name)
+      foreign_key = connection.quote_column_name(foreign_key)
+      
+      klass.destroy_all("#{primary_key} = #{victim.id} AND #{foreign_key} IN (#{ids * ','})")
     end
     
     def merge_has_and_belongs_to_many_association(victim, assoc)
