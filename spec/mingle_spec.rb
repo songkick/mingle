@@ -75,7 +75,12 @@ describe Mingle do
       
       it 'concatenates the associated collections' do
         @mike.merge @bob
-        @mike.posts.size.should == 7
+        @mike.reload.posts.size.should == 7
+      end
+      
+      it 'updates all foreign keys using one query' do
+        ActiveRecord::Base.connection.should_receive(:execute).once
+        @mike.merge_association @bob, :posts
       end
     end
   end
