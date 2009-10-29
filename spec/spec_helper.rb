@@ -8,7 +8,7 @@ ActiveRecord::Base.establish_connection :adapter  => 'sqlite3',
 
 ActiveRecord::Base.logger = Logger.new('spec/test.log')
 
-%w[schema artist user].each do |file|
+%w[schema artist post user].each do |file|
   require 'models/' + file
 end
 
