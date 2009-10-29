@@ -99,20 +99,37 @@ describe Mingle do
     end
     
     describe 'with has_and_belongs_to_many associations' do
-      before :each do
-        @mike.groups = (1..2).map { Factory :group }
-        @bob.groups  = (1..3).map { Factory :group }
+      describe 'with no conflicting links' do
+        before :each do
+          @mike.groups = (1..2).map { Factory :group }
+          @bob.groups  = (1..3).map { Factory :group }
+        end
+        
+        it 'concatenates the associated collections' do
+          @bob.merge @mike
+          @bob.reload.groups.size.should == 5
+          Group.all.each { |g| g.users.should == [@bob] }
+        end
+        
+        it 'updates all foreign keys using one query for deduping and one for reassigning' do
+          ActiveRecord::Base.connection.should_receive(:execute).twice
+          @bob.merge_association @mike, :groups
+        end
       end
       
-      it 'concatenates the associated collections' do
-        @bob.merge @mike
-        @bob.reload.groups.size.should == 5
-        Group.all.each { |g| g.users.should == [@bob] }
-      end
-      
-      it 'updates all foreign keys using one query' do
-        ActiveRecord::Base.connection.should_receive(:execute).once
-        @bob.merge_association @mike, :groups
+      describe 'with conflicting links' do
+        before :each do
+          @groups = (1..5).map { Factory :group }
+          @mike.groups = @groups.values_at 0, 2, 4
+          @bob.groups  = @groups.values_at 1, 0, 3
+        end
+        
+        it 'concatenates the associated collections' do
+          @bob.reload.groups.size.should == 3
+          @bob.merge @mike
+          @bob.reload.groups.size.should == 5
+          @groups.each { |g| g.users.should == [@bob] }
+        end
       end
     end
   end

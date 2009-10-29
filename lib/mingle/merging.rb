@@ -40,11 +40,24 @@ module Mingle
     end
     
     def merge_has_and_belongs_to_many_association(victim, assoc)
-      key = connection.quote_column_name(assoc.primary_key_name)
+      join_table  = connection.quote_table_name(assoc.options[:join_table])
+      primary_key = connection.quote_column_name(assoc.primary_key_name)
+      foreign_key = connection.quote_column_name(assoc.association_foreign_key)
+      
       connection.execute <<-SQL
-        UPDATE #{connection.quote_table_name(assoc.options[:join_table])}
-        SET #{key} = #{id}
-        WHERE #{key} = #{victim.id}
+        DELETE FROM #{join_table}
+        WHERE #{primary_key} = #{victim.id}
+        AND #{foreign_key} IN (
+          SELECT #{foreign_key}
+          FROM #{join_table}
+          WHERE #{primary_key} = #{id}
+        )
+      SQL
+      
+      connection.execute <<-SQL
+        UPDATE #{join_table}
+        SET #{primary_key} = #{id}
+        WHERE #{primary_key} = #{victim.id}
       SQL
     end
     
