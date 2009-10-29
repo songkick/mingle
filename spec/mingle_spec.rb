@@ -69,8 +69,8 @@ describe Mingle do
     
     describe 'with has_many associations' do
       before :each do
-        @mike.posts = (1..3).map { Factory :post }
-        @bob.posts  = (1..4).map { Factory :post }
+        @mike.posts = (1..3).map { Factory :post, :user => @mike }
+        @bob.posts  = (1..4).map { Factory :post, :user => @bob }
       end
       
       it 'concatenates the associated collections' do

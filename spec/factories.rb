@@ -6,7 +6,7 @@ Factory.sequence :title do |n|
 end
 
 Factory.define :post do |p|
-  p.title Factory.next(:title)
+  p.title { Factory.next(:title) }
 end
 
 Factory.define :user do |u|
