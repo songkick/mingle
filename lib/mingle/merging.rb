@@ -1,8 +1,8 @@
 module Mingle
   module Merging
     
-    def merge(record, options = {})
-      raise IncompatibleTypes.new unless record.class === self
+    def merge(victim, options = {})
+      raise IncompatibleTypes.new unless victim.class === self
       
       keepers    = Merging.extract_list(options, :keep)
       overwrites = Merging.extract_list(options, :overwrite)
@@ -10,13 +10,15 @@ module Mingle
       attributes.each do |key, value|
         next if keepers.include?(key.to_sym)
         next unless value.nil? or overwrites.include?(key.to_sym)
-        write_attribute(key, record[key])
+        write_attribute(key, victim[key])
       end
+      victim.destroy
       save
     end
     
     def self.extract_list(hash, key)
-      (hash[key] || []).to_a
+      list = hash[key] || []
+      [list].flatten
     end
     
   end

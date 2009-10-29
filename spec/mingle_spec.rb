@@ -1,4 +1,4 @@
-require File.dirname(__FILE__) + '/spec_helper'
+require 'spec/spec_helper'
 
 describe Mingle do
   describe '#merge' do
@@ -21,8 +21,19 @@ describe Mingle do
     
     it 'saves the target record' do
       @mike.merge @bob
-      @mike.reload
-      @mike.first_name.should == 'Bob'
+      @mike.reload.first_name.should == 'Bob'
+    end
+    
+    it 'removes the victim from the database' do
+      User.count.should == 2
+      @mike.merge @bob
+      User.count.should == 1
+      User.first.should == @mike
+    end
+    
+    it 'removes the victim record using #destroy' do
+      @bob.should_receive(:destroy)
+      @mike.merge @bob
     end
     
     it 'protects fields passed with :keep' do
