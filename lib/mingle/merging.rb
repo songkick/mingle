@@ -33,11 +33,7 @@ module Mingle
     
     def merge_has_many_association(victim, assoc)
       key = connection.quote_column_name(assoc.primary_key_name)
-      connection.execute <<-SQL, "#{assoc.class_name} Update"
-        UPDATE #{assoc.quoted_table_name}
-        SET #{key} = #{id}
-        WHERE #{key} = #{victim.id}
-      SQL
+      victim.__send__(assoc.name).update_all("#{key} = #{id}", "#{key} = #{victim.id}")
     end
     
     def self.extract_list(hash, key)
