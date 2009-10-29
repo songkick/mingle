@@ -97,6 +97,24 @@ describe Mingle do
         end
       end
     end
+    
+    describe 'with has_and_belongs_to_many associations' do
+      before :each do
+        @mike.groups = (1..2).map { Factory :group }
+        @bob.groups  = (1..3).map { Factory :group }
+      end
+      
+      it 'concatenates the associated collections' do
+        @bob.merge @mike
+        @bob.reload.groups.size.should == 5
+        Group.all.each { |g| g.users.should == [@bob] }
+      end
+      
+      it 'updates all foreign keys using one query' do
+        ActiveRecord::Base.connection.should_receive(:execute).once
+        @bob.merge_association @mike, :groups
+      end
+    end
   end
 end
 

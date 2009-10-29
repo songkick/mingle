@@ -5,6 +5,10 @@ Factory.sequence :title do |n|
   "Title #{n}"
 end
 
+Factory.define :group do |g|
+  g.title { Factory.next :title }
+end
+
 Factory.define :post do |p|
   p.title { Factory.next(:title) }
 end

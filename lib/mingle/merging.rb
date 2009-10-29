@@ -39,6 +39,15 @@ module Mingle
       victim.__send__(assoc.name).update_all("#{key} = #{id}", "#{key} = #{victim.id}")
     end
     
+    def merge_has_and_belongs_to_many_association(victim, assoc)
+      key = connection.quote_column_name(assoc.primary_key_name)
+      connection.execute <<-SQL
+        UPDATE #{connection.quote_table_name(assoc.options[:join_table])}
+        SET #{key} = #{id}
+        WHERE #{key} = #{victim.id}
+      SQL
+    end
+    
     def self.extract_list(hash, key)
       list = hash[key] || []
       [list].flatten
