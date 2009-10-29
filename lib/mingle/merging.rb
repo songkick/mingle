@@ -4,15 +4,7 @@ module Mingle
     def merge(victim, options = {})
       raise IncompatibleTypes.new unless victim.class === self
       
-      keepers    = Merging.extract_list(options, :keep)
-      overwrites = Merging.extract_list(options, :overwrite)
-      
-      attributes.each do |key, value|
-        next if keepers.include?(key.to_sym)
-        next unless value.nil? or overwrites.include?(key.to_sym)
-        write_attribute(key, victim[key])
-      end
-      
+      merge_attributes(victim, options)
       merge_all_associations(victim) if valid?
       
       returning(valid?) { |valid| save and victim.destroy if valid }
@@ -30,6 +22,17 @@ module Mingle
     end
     
   private
+    
+    def merge_attributes(victim, options)
+      keepers    = Merging.extract_list(options, :keep)
+      overwrites = Merging.extract_list(options, :overwrite)
+      
+      attributes.each do |key, value|
+        next if keepers.include?(key.to_sym)
+        next unless value.nil? or overwrites.include?(key.to_sym)
+        write_attribute(key, victim[key])
+      end
+    end
     
     def merge_has_many_association(victim, assoc)
       key = connection.quote_column_name(assoc.primary_key_name)

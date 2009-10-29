@@ -73,14 +73,28 @@ describe Mingle do
         @bob.posts  = (1..4).map { Factory :post, :user => @bob }
       end
       
-      it 'concatenates the associated collections' do
-        @mike.merge @bob
-        @mike.reload.posts.size.should == 7
+      describe 'when the merged object is valid' do
+        it 'concatenates the associated collections' do
+          @mike.merge @bob
+          @mike.reload.posts.size.should == 7
+        end
+        
+        it 'updates all foreign keys using one query' do
+          ActiveRecord::Base.connection.should_receive(:execute).once
+          @mike.merge_association @bob, :posts
+        end
       end
       
-      it 'updates all foreign keys using one query' do
-        ActiveRecord::Base.connection.should_receive(:execute).once
-        @mike.merge_association @bob, :posts
+      describe 'when the merged object is not valid' do
+        before :each do
+          @mike.username = 'admin'
+        end
+        
+        it 'does not concatenate the associated collections' do
+          @mike.merge @bob
+          @mike.reload.posts.size.should == 3
+          @bob.reload.posts.size.should == 4
+        end
       end
     end
   end
