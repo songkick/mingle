@@ -6,7 +6,7 @@ describe '#merge' do
     @bob  = Factory :user, :username => 'bob', :first_name => 'Bob'
     
     @house_of_leaves = Factory :post, :title => 'House of Leaves', :author => 'Mark Z. Danielewski'
-    @war_and_peace   = Factory :post, :title => 'War and Peace',   :author => 'Leo Tolstoy'
+    @war_and_peace   = Factory :post, :title => 'War and Peace',   :author => 'Leo Tolstoy',         :user => @bob
   end
   
   it 'requires the target and victim to be of the same type' do
@@ -66,6 +66,22 @@ describe '#merge' do
     it 'overwrites fields passed with :overwrite' do
       @mike.merge @bob, :overwrite => :username
       @mike.username.should == 'bob'
+    end
+  end
+  
+  describe 'with belongs_to associations' do
+    before :each do
+      Post.stub(:merge_strategy).and_return nil
+    end
+    
+    it 'fills in null references on the target with the value from the victim' do
+      @house_of_leaves.merge @war_and_peace
+      @house_of_leaves.user_id.should == @bob.id
+    end
+    
+    it 'respects association names given with :keep' do
+      @house_of_leaves.merge @war_and_peace, :keep => :user
+      @house_of_leaves.user.should be_nil
     end
   end
   
@@ -166,18 +182,24 @@ describe '#merge' do
   end
   
   describe 'with merge strategies' do
-    it 'picks fields to keep using class-level merge strategies' do
-      @house_of_leaves.merge @war_and_peace
-      @house_of_leaves.title.should == 'House of Leaves'
-      @house_of_leaves.author.should == 'Leo Tolstoy'
+    before :each do
+      @house_of_leaves.user = @mike
     end
     
-    it 'picks fields to keep using an inline strategy if one is given' do
+    it 'picks fields to keep using class-level merge strategies' do
+      @house_of_leaves.merge @war_and_peace
+      @house_of_leaves.title.should  == 'House of Leaves'
+      @house_of_leaves.author.should == 'Leo Tolstoy'
+      @house_of_leaves.user.should   == @mike
+    end
+    
+    it 'picks fields to keep using an inline strategy' do
       @house_of_leaves.merge @war_and_peace do |key, my_value, their_value|
-        key == :title ? their_value : my_value
+        [:title, :user].include?(key) ? their_value : my_value
       end
-      @house_of_leaves.title.should == 'War and Peace'
+      @house_of_leaves.title.should  == 'War and Peace'
       @house_of_leaves.author.should == 'Mark Z. Danielewski'
+      @house_of_leaves.user.should   == @bob
     end
   end
 end
