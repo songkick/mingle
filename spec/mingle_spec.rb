@@ -14,7 +14,7 @@ describe '#merge' do
   describe 'with basic objects' do
     it 'fills blanks in the target with data from the victim' do
       @mike.first_name.should be_nil
-      @mike.merge @bob
+      @bob.merge_into @mike
       @mike.username.should == 'mike'
       @mike.first_name.should == 'Bob'
     end

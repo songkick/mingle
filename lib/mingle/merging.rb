@@ -9,6 +9,11 @@ module Mingle
       
       returning(valid?) { |valid| save and victim.destroy if valid }
     end
+    alias :merge_from :merge
+    
+    def merge_into(target)
+      target.merge(self)
+    end
     
     def merge_all_associations(victim)
       self.class.reflect_on_all_associations.sort { |a,b|
