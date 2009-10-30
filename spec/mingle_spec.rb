@@ -241,6 +241,10 @@ describe '#merge' do
   describe 'with merge strategies' do
     before :each do
       @house_of_leaves.user = @mike
+      
+      Post.stub(:merge_strategy).and_return(lambda { |key, my_value, their_value|
+        key == :author ? their_value : my_value
+      })
     end
     
     it 'picks fields to keep using class-level merge strategies' do
@@ -264,7 +268,7 @@ describe '#merge' do
     before :each do
       Post.delete_all
       @mike.posts = %w[Foo Bar].map { |title| Factory :post, :title => title }
-      @bob.posts = %w[Whizz Foo].map { |title| Factory :post, :title => title }
+      @bob.posts = %w[Whizz Foo].map { |title| Factory :post, :title => title, :body => 'The body' }
       
       Post.stub(:merge_if).and_return(lambda { |me, them|
         [:title, :user].all? { |key| me[key] == them[key] }
@@ -275,6 +279,7 @@ describe '#merge' do
       Post.count.should == 4
       @bob.merge_into @mike
       @mike.reload.posts.map(&:title).should == %w[Foo Bar Whizz]
+      @mike.posts.first.body.should == 'The body'
       Post.count.should == 3
     end
   end

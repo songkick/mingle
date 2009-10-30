@@ -15,6 +15,7 @@ ActiveRecord::Schema.define do
   create_table :posts, :force => true do |t|
     t.string :author
     t.string :title
+    t.text :body
     t.belongs_to :user
   end
   
