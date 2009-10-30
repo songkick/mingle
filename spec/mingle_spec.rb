@@ -270,9 +270,7 @@ describe '#merge' do
       @mike.posts = %w[Foo Bar].map { |title| Factory :post, :title => title }
       @bob.posts = %w[Whizz Foo].map { |title| Factory :post, :title => title, :body => 'The body' }
       
-      Post.stub(:merge_if).and_return(lambda { |me, them|
-        [:title, :user].all? { |key| me[key] == them[key] }
-      })
+      Post.stub(:merge_if).and_return(lambda { |me, them| me.title == them.title })
     end
     
     it 'should remove duplicates from concatenated collections' do

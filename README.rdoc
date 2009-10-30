@@ -72,11 +72,39 @@ be set per-class to apply to all merges for that class:
     end
   end
 
-One-to-many and many-to-many associations are currently handled by simply
+One-to-many and many-to-many associations are (by default) handled by simply
 concatenating the two associated collections. This is done efficiently using
 a single query rather than loading and updating all the associated objects.
 Duplicate links in HABTM join tables are deleted, as are duplicate links in
 join models used in <tt>has_many :through</tt> associations.
+
+You can specify how to look for duplicates in merged collections using the
+<tt>merge_if</tt> macro. e.g. say I want to make sure that merged cities do
+not contain venues with the same name:
+
+  class City
+    has_many :venues
+  end
+  
+  class Venue
+    belongs_to :city
+    
+    merge_if { |me, them| me.name == them.name }
+  end
+  
+  london = Factory :city, :venues => %w[Koko Scala Astoria].map { |n| Factory :venue, :name => n }
+  new_york = Factory :city, :venues => %w[Scala Factory].map { |n| Factory :venue, :name => n }
+  
+  Venue.count.should == 5
+  
+  london.merge new_york
+  
+  london.venues.map(&:name).should == %w[Koko Scala Astoria Factory]
+  Venue.count.should == 4
+
+The duplicate objects from the victim's collection are merged into the object
+in the target's collection using the <tt>merge</tt> method, so attributes from
+the victim objects are not lost.
 
 
 == TODO
