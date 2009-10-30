@@ -3,7 +3,14 @@ Manifest.txt
 README.txt
 Rakefile
 lib/mingle.rb
+lib/mingle/macros.rb
+lib/mingle/merging.rb
+spec/models/artist.rb
+spec/models/group.rb
+spec/models/post.rb
+spec/models/relation.rb
 spec/models/schema.rb
+spec/models/tracking.rb
 spec/models/user.rb
 spec/factories.rb
 spec/mingle_spec.rb
