@@ -1,0 +1,114 @@
+= Mingle
+
+* http://github.com/songkick/mingle
+
+Mingle is an ActiveRecord extension for merging database records. It
+provides completely generic logic for removing duplicate entries from
+tables, including merging associations.
+
+
+== Examples
+
+Objects are merged using the syntax <tt>target.merge victim</tt>. The
+victim's attributes are used to fill in any blanks in the target. If
+the target is valid after this update, it is saved and the victim is
+destroyed.
+
+  lennon = Factory :artist, :first_name => 'John'
+  starr  = Factory :artist, :last_name  => 'Starr'
+  
+  Artist.count.should == 2
+  
+  lennon.merge starr
+  
+  lennon.first_name.should == 'John'
+  lennon.last_name.should == 'Starr'
+  
+  Artist.count.should == 1
+
+You can use the <tt>:keep</tt> and <tt>:overwrite</tt> options to get
+better control over which fields are changed by the merge. <tt>:keep</tt>
+stops fields being replaced:
+
+  lennon = Factory :artist, :first_name => 'John'
+  starr  = Factory :artist, :first_name => 'Ringo', :last_name  => 'Starr'
+  
+  lennon.merge starr, :keep => :last_name
+  
+  lennon.first_name.should == 'John'
+  lennon.last_name.should be_nil
+
+<tt>:overwrite</tt> forces fields to be replaced:
+
+  lennon = Factory :artist, :first_name => 'John',  :last_name  => 'Lennon'
+  starr  = Factory :artist, :first_name => 'Ringo', :last_name  => 'Starr'
+  
+  lennon.merge starr, :overwrite => :first_name
+  
+  lennon.first_name.should == 'Ringo'
+  lennon.last_name.should == 'Lennon'
+
+You can also pass a block to decide which attributes to keep by inspecting
+the value of each attribute on both objects. For each key, the value returned
+by the block is the one kept:
+
+  lennon = Factory :artist, :first_name => 'John',  :last_name  => 'Lennon'
+  starr  = Factory :artist, :first_name => 'Ringo', :last_name  => 'Starr'
+  
+  lennon.merge starr do |key, my_value, their_value|
+    key == :first_name ? my_value : their_value
+  end
+  
+  lennon.first_name.should == 'John'
+  lennon.last_name.should == 'Starr'
+
+<tt>:keep</tt>, <tt>:overwrite</tt> and decision blocks are supported for
+basic attributes and <tt>belongs_to</tt> associations. Decision blocks can
+be set per-class to apply to all merges for that class:
+
+  class Artist
+    merge_strategy do |key, my_value, their_value|
+      key == :first_name ? my_value : their_value
+    end
+  end
+
+One-to-many and many-to-many associations are currently handled by simply
+concatenating the two associated collections. This is done efficiently using
+a single query rather than loading and updating all the associated objects.
+Duplicate links in HABTM join tables are deleted, as are duplicate links in
+join models used in <tt>has_many :through</tt> associations.
+
+
+== TODO
+
+* Handle recursive merges and join models more intelligently
+* Allow pruning of collections during the merge process
+* Mark victims as duplicates rather than deleting
+* Forward changes to marked dupes onto their target object
+* Automatically redirect when accessing pages for victim objects
+
+
+== License
+
+(The MIT License)
+
+Copyright (c) 2009 Songkick.com
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+'Software'), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
