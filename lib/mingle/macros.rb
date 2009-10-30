@@ -1,8 +1,8 @@
 module Mingle
   module Macros
     
-    def can_be_merged
-      include Merging
+    def handle_merge(&strategy)
+      write_inheritable_attribute(:merge_strategy, strategy)
     end
     
   end

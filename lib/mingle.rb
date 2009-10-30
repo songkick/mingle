@@ -9,5 +9,8 @@ module Mingle
   class IncompatibleTypes < StandardError; end
 end
 
-ActiveRecord::Base.extend Mingle::Macros
+class ActiveRecord::Base
+  extend Mingle::Macros
+  include Mingle::Merging
+end
 

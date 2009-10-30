@@ -1,10 +1,10 @@
 module Mingle
   module Merging
     
-    def merge(victim, options = {})
+    def merge(victim, options = {}, &strategy)
       raise IncompatibleTypes.new unless victim.class === self
       
-      merge_attributes(victim, options)
+      merge_attributes(victim, options, &strategy)
       merge_all_associations(victim) if valid?
       
       returning(valid?) { |valid| save and victim.destroy if valid }
@@ -32,14 +32,19 @@ module Mingle
     
   private
     
-    def merge_attributes(victim, options)
+    def merge_attributes(victim, options = {}, &strategy)
       keepers    = Merging.extract_list(options, :keep)
       overwrites = Merging.extract_list(options, :overwrite)
+      strategy   = strategy || self.class.read_inheritable_attribute(:merge_strategy)
       
       attributes.each do |key, value|
-        next if keepers.include?(key.to_sym)
-        next unless value.nil? or overwrites.include?(key.to_sym)
-        write_attribute(key, victim[key])
+        if strategy
+          write_attribute(key, strategy.call(key.to_sym, value, victim[key]))
+        else
+          next if keepers.include?(key.to_sym)
+          next unless value.nil? or overwrites.include?(key.to_sym)
+          write_attribute(key, victim[key])
+        end
       end
     end
     
@@ -82,6 +87,9 @@ module Mingle
         SET #{primary_key} = #{id}
         WHERE #{primary_key} = #{victim.id}
       SQL
+    end
+    
+    def merge_belongs_to_association(victim, assoc)
     end
     
     def self.extract_list(hash, key)
