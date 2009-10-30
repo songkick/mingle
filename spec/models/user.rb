@@ -6,5 +6,7 @@ class User < ActiveRecord::Base
   
   has_many :trackings
   has_many :artists, :through => :trackings
+  
+  include Relation::Relatable
 end
 

@@ -7,6 +7,8 @@ describe '#merge' do
     
     @house_of_leaves = Factory :post, :title => 'House of Leaves', :author => 'Mark Z. Danielewski'
     @war_and_peace   = Factory :post, :title => 'War and Peace',   :author => 'Leo Tolstoy',         :user => @bob
+    
+    @radiohead = Factory :artist, :name => 'Radiohead'
   end
   
   it 'requires the target and victim to be of the same type' do
@@ -154,14 +156,15 @@ describe '#merge' do
   describe 'with has_many :through associations' do
     describe 'with no conflicting links' do
       before :each do
-        @mike.artists = (1..2).map { Factory :artist }
-        @bob.artists  = (1..3).map { Factory :artist }
+        @artists = (1..5).map { Factory :artist }
+        @mike.artists = @artists.values_at 0, 1
+        @bob.artists  = @artists.values_at 2, 3, 4
       end
       
       it 'concatenates the associated collections' do
         @bob.merge @mike
         @bob.reload.artists.size.should == 5
-        Artist.all.each { |a| a.fans.should == [@bob] }
+        @artists.each { |a| a.fans.should == [@bob] }
       end
     end
     
@@ -178,6 +181,20 @@ describe '#merge' do
         @bob.reload.artists.size.should == 5
         @artists.each { |a| a.fans.should == [@bob] }
       end
+    end
+  end
+  
+  describe 'with polymorphic associations' do
+    before :each do
+      @mike.is_related_to @bob, :as => 'brother'
+      @mike.is_related_to @radiohead, :as => 'fan'
+      @bob.is_related_to @house_of_leaves, :as => 'publisher'
+    end
+    
+    it 'concatenates the associated collections' do
+      @mike.should_not be_related_to(@house_of_leaves, :as => 'publisher')
+      @mike.merge @bob
+      @mike.should be_related_to(@house_of_leaves, :as => 'publisher')
     end
   end
   

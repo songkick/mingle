@@ -18,6 +18,12 @@ ActiveRecord::Schema.define do
     t.belongs_to :user
   end
   
+  create_table :relations, :force => true do |t|
+    t.belongs_to :object, :polymorphic => true
+    t.belongs_to :subject, :polymorphic => true
+    t.string :relationship
+  end
+  
   create_table :trackings, :force => true do |t|
     t.belongs_to :user
     t.belongs_to :artist
