@@ -1,7 +1,8 @@
 require 'active_record'
 
-require 'mingle/macros'
-require 'mingle/merging'
+%w[macros merging].each do |file|
+  require File.join(File.dirname(__FILE__), 'mingle', file)
+end
 
 module Mingle
   VERSION = '0.1.0'

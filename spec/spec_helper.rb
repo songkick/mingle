@@ -1,3 +1,4 @@
+require 'spec'
 require 'factory_girl'
 require 'database_cleaner'
 
@@ -9,7 +10,7 @@ ActiveRecord::Base.establish_connection :adapter  => 'sqlite3',
 ActiveRecord::Base.logger = Logger.new('spec/test.log')
 
 %w[schema artist group post tracking user].each do |file|
-  require 'models/' + file
+  require 'spec/models/' + file
 end
 
 Spec::Runner.configure do |config|
