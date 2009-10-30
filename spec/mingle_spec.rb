@@ -81,7 +81,7 @@ describe '#merge' do
       @house_of_leaves.user_id.should == @bob.id
     end
     
-    it 'respects association names given with :keep' do
+    it 'protects association names given with :keep' do
       @house_of_leaves.merge @war_and_peace, :keep => :user
       @house_of_leaves.user.should be_nil
     end
@@ -184,17 +184,57 @@ describe '#merge' do
     end
   end
   
-  describe 'with polymorphic associations' do
+  describe 'with polymorphic' do
     before :each do
       @mike.is_related_to @bob, :as => 'brother'
       @mike.is_related_to @radiohead, :as => 'fan'
       @bob.is_related_to @house_of_leaves, :as => 'publisher'
+      @radiohead.is_related_to @bob, :as => 'entertainer'
     end
     
-    it 'concatenates the associated collections' do
-      @mike.should_not be_related_to(@house_of_leaves, :as => 'publisher')
-      @mike.merge @bob
-      @mike.should be_related_to(@house_of_leaves, :as => 'publisher')
+    describe 'belongs_to :polymorphic associations' do
+      before :each do
+        @publisher, @entertainer = @bob.relations.first, @radiohead.relations.first
+        @publisher.update_attribute :object, nil
+        @bob.relations.size.should == 0
+      end
+      
+      it 'fills in null references on the target with the value from the victim' do
+        @publisher.merge @entertainer
+        
+        @publisher.object.should       == @radiohead
+        @publisher.subject.should      == @house_of_leaves
+        @publisher.relationship.should == 'publisher'
+        
+        @radiohead.relations.size.should == 1
+        @radiohead.should be_related_to(@house_of_leaves, :as => 'publisher')
+      end
+      
+      it 'protects association names given with :keep' do
+        @publisher.merge @entertainer, :keep => :object
+        
+        @publisher.object.should be_nil
+        @publisher.subject.should      == @house_of_leaves
+        @publisher.relationship.should == 'publisher'
+      end
+      
+      it 'overwrites associations given with :overwrite' do
+        @publisher.merge @entertainer, :overwrite => [:subject, :relationship]
+        
+        @publisher.object.should       == @radiohead
+        @publisher.subject.should      == @bob
+        @publisher.relationship.should == 'entertainer'
+      end
+    end
+    
+    describe 'has_many :as associations' do
+      it 'concatenates the associated collections' do
+        @mike.should_not be_related_to(@house_of_leaves, :as => 'publisher')
+        @mike.relations.size.should == 2
+        @mike.merge @bob
+        @mike.should be_related_to(@house_of_leaves, :as => 'publisher')
+        @mike.relations.size.should == 3
+      end
     end
   end
   
