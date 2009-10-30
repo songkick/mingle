@@ -259,5 +259,24 @@ describe '#merge' do
       @house_of_leaves.user.should   == @bob
     end
   end
+  
+  describe 'recursively using duplication rules' do
+    before :each do
+      Post.delete_all
+      @mike.posts = %w[Foo Bar].map { |title| Factory :post, :title => title }
+      @bob.posts = %w[Whizz Foo].map { |title| Factory :post, :title => title }
+      
+      Post.stub(:merge_if).and_return(lambda { |me, them|
+        [:title, :user].all? { |key| me[key] == them[key] }
+      })
+    end
+    
+    it 'should remove duplicates from concatenated collections' do
+      Post.count.should == 4
+      @bob.merge_into @mike
+      @mike.reload.posts.map(&:title).should == %w[Foo Bar Whizz]
+      Post.count.should == 3
+    end
+  end
 end
 

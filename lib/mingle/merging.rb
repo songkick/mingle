@@ -75,8 +75,23 @@ module Mingle
     
     def merge_has_many_association(victim, assoc, &strategy)
       return merge_has_many_through_association(victim, assoc) if assoc.options[:through]
-      key = connection.quote_column_name(assoc.primary_key_name)
-      victim.__send__(assoc.name).update_all("#{key} = #{id}", "#{key} = #{victim.id}")
+      
+      mine   = __send__(assoc.name)
+      theirs = victim.__send__(assoc.name)
+      klass  = Kernel.const_get(assoc.class_name)
+      key    = assoc.primary_key_name
+      
+      if detect_duplicates = klass.merge_if
+        theirs.each do |associated_object|
+          if dupe = mine.select { |record| detect_duplicates.call(record, associated_object) }.first
+            dupe.merge(associated_object)
+          else
+            associated_object.update_attribute(key, id)
+          end
+        end
+      else
+        theirs.update_all("#{connection.quote_column_name key} = #{id}")
+      end
     end
     
     # TODO merge join models as first-class objects
